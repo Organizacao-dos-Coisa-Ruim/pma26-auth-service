@@ -1,0 +1,5 @@
+# Segredo só para os testes (não é usado em nenhum ambiente real)
+pma:
+  jwt:
+    secret: segredo-de-teste-com-pelo-menos-32-caracteres
+    duration: 1h

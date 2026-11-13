@@ -1,0 +1,16 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: auth
+
+pma:
+  # URL do Account usada pelo cliente Feign
+  account:
+    url: ${ACCOUNT_URL:http://account:8080}
+  jwt:
+    # obrigatório, mínimo de 32 caracteres; nunca comitar o valor real
+    secret: ${JWT_SECRET}
+    # validade do token (formato Duration do Spring: 30m, 1h, 1d...)
+    duration: ${JWT_DURATION:1h}
