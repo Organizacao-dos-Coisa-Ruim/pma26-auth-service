@@ -20,8 +20,8 @@ import pma.account.LoginIn;
 @RequiredArgsConstructor
 public class AuthService {
 
-  /** O Account ainda não tem papéis; todo usuário recebe "user" no token. */
-  static final String DEFAULT_ROLE = "user";
+  /** Usado se o Account não informar o papel (o token nunca sai sem role). */
+  static final String DEFAULT_ROLE = AccountOut.ROLE_USER;
 
   private final AccountController accountController;
   private final JwtService jwtService;
@@ -58,7 +58,8 @@ public class AuthService {
     if (account == null) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "credenciais inválidas");
     }
-    return new TokenOut(jwtService.create(account.id(), DEFAULT_ROLE));
+    String role = account.role() == null || account.role().isBlank() ? DEFAULT_ROLE : account.role();
+    return new TokenOut(jwtService.create(account.id(), role));
   }
 
   public SolveOut solve(SolveIn in) {

@@ -65,13 +65,33 @@ class AuthServiceTest {
   @Test
   void loginDevolveTokenComIdDaConta() {
     when(accountController.login(any(LoginIn.class)))
-        .thenReturn(ResponseEntity.ok(new AccountOut("conta-1", "Ana", "ana@insper.edu.br")));
+        .thenReturn(ResponseEntity.ok(new AccountOut("conta-1", "Ana", "ana@insper.edu.br", "user")));
 
     TokenOut token = authService.login(new CredentialIn("ana@insper.edu.br", "123456"));
 
     SolveOut solved = jwtService.solve(token.jwt());
     assertThat(solved.idAccount()).isEqualTo("conta-1");
     assertThat(solved.role()).isEqualTo("user");
+  }
+
+  @Test
+  void tokenDoAdminLevaRoleAdmin() {
+    when(accountController.login(any(LoginIn.class)))
+        .thenReturn(ResponseEntity.ok(new AccountOut("adm-1", "Admin", "admin@pma.com", "admin")));
+
+    TokenOut token = authService.login(new CredentialIn("admin@pma.com", "s3nha"));
+
+    assertThat(jwtService.solve(token.jwt()).role()).isEqualTo("admin");
+  }
+
+  @Test
+  void contaSemRoleRecebeUserNoToken() {
+    when(accountController.login(any(LoginIn.class)))
+        .thenReturn(ResponseEntity.ok(new AccountOut("conta-1", "Ana", "ana@insper.edu.br", null)));
+
+    TokenOut token = authService.login(new CredentialIn("ana@insper.edu.br", "123456"));
+
+    assertThat(jwtService.solve(token.jwt()).role()).isEqualTo("user");
   }
 
   @Test
