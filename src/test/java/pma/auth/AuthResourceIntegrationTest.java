@@ -4,11 +4,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.micrometer.metrics.test.autoconfigure.AutoConfigureMetrics;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
@@ -24,6 +26,8 @@ import pma.account.AccountOut;
 import pma.account.LoginIn;
 
 /** Sobe a aplicação inteira com o cliente Feign do Account mockado. */
+// métricas ficam desligadas em testes por padrão; religamos para testar o endpoint do Prometheus
+@AutoConfigureMetrics
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -38,6 +42,15 @@ class AuthResourceIntegrationTest {
   @Test
   void healthCheck() throws Exception {
     mockMvc.perform(get("/auth/health-check")).andExpect(status().isOk());
+  }
+
+  @Test
+  void metricasDoPrometheusComHistogramaDeLatencia() throws Exception {
+    mockMvc.perform(get("/auth/health-check"));
+
+    mockMvc.perform(get("/actuator/prometheus"))
+        .andExpect(status().isOk())
+        .andExpect(content().string(org.hamcrest.Matchers.containsString("http_server_requests_seconds_bucket")));
   }
 
   @Test

@@ -1,5 +1,9 @@
 server:
   port: 8080
+  tomcat:
+    # publica métricas das threads do Tomcat (ocupadas / máximo), úteis no load test
+    mbeanregistry:
+      enabled: true
 
 spring:
   application:
@@ -14,3 +18,20 @@ pma:
     secret: ${JWT_SECRET}
     # validade do token (formato Duration do Spring: 30m, 1h, 1d...)
     duration: ${JWT_DURATION:1h}
+
+# Observabilidade: health e métricas no formato do Prometheus em /actuator/*.
+# O gateway não roteia /actuator, então isso só é acessível pela rede interna.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    distribution:
+      # histograma de latência por rota, para calcular p95/p99 no Grafana
+      percentiles-histogram:
+        http.server.requests: true
