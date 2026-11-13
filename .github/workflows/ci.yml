@@ -1,0 +1,68 @@
+# CI/CD do auth-service
+#
+# Todo push/PR: instala as interfaces pma:auth e pma:account e roda os testes.
+# Push na main: também publica a imagem no Docker Hub (<usuario>/auth:latest e :<sha>),
+# se os secrets DOCKERHUB_USERNAME e DOCKERHUB_TOKEN estiverem configurados na organização.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  IMAGE: auth
+
+jobs:
+  build:
+    name: Build, testes e imagem
+    runs-on: ubuntu-latest
+    env:
+      HAS_DOCKERHUB: ${{ secrets.DOCKERHUB_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # interfaces de que o service depende (não estão em nenhum repositório Maven público)
+      - name: Checkout da interface auth
+        uses: actions/checkout@v4
+        with:
+          repository: Organizacao-dos-Coisa-Ruim/pma26-auth
+          path: .deps/auth
+
+      - name: Checkout da interface account
+        uses: actions/checkout@v4
+        with:
+          repository: Organizacao-dos-Coisa-Ruim/pma-26-account
+          path: .deps/account
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Instalar interfaces
+        run: |
+          mvn -B -q install -DskipTests -f .deps/auth/pom.xml
+          mvn -B -q install -DskipTests -f .deps/account/pom.xml
+
+      - name: Build e testes
+        run: mvn -B verify
+
+      - name: Login no Docker Hub
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && env.HAS_DOCKERHUB == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build e push da imagem
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && env.HAS_DOCKERHUB == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE }}:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE }}:${{ github.sha }}
