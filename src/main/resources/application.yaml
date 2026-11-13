@@ -1,5 +1,9 @@
 server:
   port: 8080
+  tomcat:
+    # publica métricas das threads do Tomcat (ocupadas / máximo), úteis no load test
+    mbeanregistry:
+      enabled: true
 
 spring:
   application:
