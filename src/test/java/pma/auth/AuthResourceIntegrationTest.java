@@ -64,7 +64,7 @@ class AuthResourceIntegrationTest {
   @Test
   void loginEDepoisSolveDevolvemAConta() throws Exception {
     when(accountController.login(any(LoginIn.class)))
-        .thenReturn(ResponseEntity.ok(new AccountOut("conta-1", "Ana", "ana@insper.edu.br")));
+        .thenReturn(ResponseEntity.ok(new AccountOut("conta-1", "Ana", "ana@insper.edu.br", "user")));
 
     String body = mockMvc.perform(post("/auth/login")
         .contentType(MediaType.APPLICATION_JSON)
